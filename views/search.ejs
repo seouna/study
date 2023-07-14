@@ -11,7 +11,7 @@
   <body>
    
     <%- include('nav.html') %>
-      <h4 class="ml-2 my-3 text-center">❌TODOLIST❌</h4>
+      <h4 class="ml-2 my-3 text-center">검색결과</h4>
       <div class="container input-group mb-2">
         <input class="form-control" id="search-input">
         <button class="input-group-append btn btn-danger" id="search">검색</button>
@@ -20,15 +20,7 @@
         $('#search').click(function(){
           var 입력한값 = $('#search-input').val();
           window.location.replace('/search?value='+입력한값);
-          
-          // var 자료 = {이름 : '값', 이름2 :'값2'}
-          //1
-          // $.param(자료)
 
-          //2
-          // $(폼태그).serialize() 
-          // ?value= 일일이 입력하기싫으면 object 자료형으로 만들어서
-          // 쿼리스트링이 남는다
         });
       </script>
 

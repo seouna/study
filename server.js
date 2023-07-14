@@ -48,6 +48,37 @@ app.post('/add',function (요청,응답) {
 
           });
       });
+  });
+});
+
+
+app.get('/search', (요청,응답) => {
+  console.log(요청.query.value);
+  //find({제목:요청.query.value}) 일치하는것만 찾아줌
+  // db.collection('post').find( { $text:{ $search:요청.query.value } } ).toArray((에러,결과) => {
+  // aggregate는 여러개 조건걸수있다
+
+  //몽고디비에서 서치인덱스 사용!!
+  var 검색조건 = [
+    {
+      $search: {
+        index: 'titleSearch',
+        text: {
+          query: 요청.query.value,
+          path: ['제목','날짜']  // 제목날짜 둘다 찾고 싶으면 ['제목', '날짜']
+        }
+      }
+    },
+    { $sort : {_id : 1 }},// 아이디 순으로 정렬 -1 내림
+    { $limit : 10} //상위에서 10개만
+   // { $project :{ 제목 : 1,_id :0, score : {$meta : "searchScore"}}}  // 관련도순정렬
+  ] 
+  console.log(요청.query);
+  db.collection('post').aggregate(검색조건).toArray((에러, 결과)=>{
+    console.log(결과)
+    응답.render('search.ejs', {posts : 결과})
+  })
+
 });
 
 
@@ -64,11 +95,9 @@ app.get('/list',function(요청,응답){
 
 
 
- });//mongodb
-
-  app.listen(8080, function() {
-    console.log('listening on 8080')
-  })
+app.listen(8080, function() {
+  console.log('listening on 8080')
+})
 
 
 
