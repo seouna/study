@@ -21,16 +21,14 @@ app.use('/public',express.static('public')); //미들웨어
 const MongoClient = require('mongodb').MongoClient;
 
 var db; //변수생성
-MongoClient.connect('mongodb+srv://yuna223:yuna1234@mycluster.ew9r0dj.mongodb.net/?retryWrites=true&w=majority', function(에러, client){
+MongoClient.connect(process.env.DB_URL, function(에러, client){
   if (에러) return console.log(에러)
 
   db = client.db('todoapp'); //db연결
-
-//어떤 사람이 /add 경로로 POST요청을 하면 ~~를 해주세요
     
 });
 
-
+//어떤 사람이 /add 경로로 POST요청을 하면 ~~를 해주세요
 app.post('/add',function (요청,응답) {
 
 
