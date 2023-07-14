@@ -1,5 +1,5 @@
 
-
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser'); 
 const { param } = require('express/lib/request');
@@ -27,35 +27,30 @@ MongoClient.connect('mongodb+srv://yuna223:yuna1234@mycluster.ew9r0dj.mongodb.ne
   db = client.db('todoapp'); //db연결
 
 //어떤 사람이 /add 경로로 POST요청을 하면 ~~를 해주세요
+    
+});
+
 
 app.post('/add',function (요청,응답) {
 
 
-    //DB에 저장해주세요    
-    db.collection('counter').findOne({name :'게시물갯수'},function (에러,결과) {
-        console.log(결과.totalPost);
-        var 총게시물갯수 = 결과.totalPost
+  //DB에 저장해주세요    
+  db.collection('counter').findOne({name :'게시물갯수'},function (에러,결과) {
+      console.log(결과.totalPost);
+      var 총게시물갯수 = 결과.totalPost
 
-        db.collection('post').insertOne({_id: 총게시물갯수+1, 제목:요청.body.title,날짜:요청.body.date},function (에러,결과) {
-            console.log('저장완료');
-            //totalPost 항목도 +1 해야함 수정
-            db.collection('counter').updateOne({name:'게시물갯수'},{$inc : {totalPost:1}},function(에러,결과){ //콜백함수 : 순차적으로 코드가 진행되야할때
-                                                                //operator 써야함 
-                                                                //set은 값을 변경 // inc 값을수정 (증가 감소)
-                if(에러) return console.log(에러);
-                응답.send('전송완료')
+      db.collection('post').insertOne({_id: 총게시물갯수+1, 제목:요청.body.title,날짜:요청.body.date},function (에러,결과) {
+          console.log('저장완료');
+          //totalPost 항목도 +1 해야함 수정
+          db.collection('counter').updateOne({name:'게시물갯수'},{$inc : {totalPost:1}},function(에러,결과){ //콜백함수 : 순차적으로 코드가 진행되야할때
+                                                              //operator 써야함 
+                                                              //set은 값을 변경 // inc 값을수정 (증가 감소)
+              if(에러) return console.log(에러);
+              응답.send('전송완료')
 
-            });
-        });
-    });
-
-    
-    
-                        
-   
-    
-})
-
+          });
+      });
+});
 
 
 app.get('/list',function(요청,응답){
@@ -154,32 +149,78 @@ app.get('/login',function(요청,응답){
     응답.render('login.ejs');
 });
 
+app.get('/fail',function(요청,응답){
+  응답.redirect('/login');
+});   
+//마이페이지 접속전 실행할 미들웨어처리
+app.get('/mypage',로그인했니 ,function(요청,응답){
+
+  //로그인한 사람만 보여줘야함
+  console.log(요청.user);
+  응답.render('mypage.ejs',{사용자 : 요청.user});
+                            //데이터 전달,가져갈때
+});
+
+function 로그인했니(요청,응답,next){
+  //로그인한상태면 항상 존재
+  if(요청.user){
+    next();
+  }else{
+    응답.send('로그인안함');
+  }
+}
+
+
+
+app.get('/fail',function(요청,응답){
+
+  응답.render('login_fail.ejs');
+});
 
 app.post('/login',passport.authenticate('local',{
+  //로그인 실패시 처리
     failureRedirect : '/fail'
 }),function(요청,응답){
     //아이디 비번 맞으면 성공페이지로 보내줘야함
     응답.redirect('/');
 });
-
+// 보안 안좋다 
 passport.use(new LocalStrategy({
-    usernameField: 'id',
-    passwordField: 'pw',
-    session: true,
-    passReqToCallback: false,
-  }, function (입력한아이디, 입력한비번, done) {
-    //console.log(입력한아이디, 입력한비번);
-    db.collection('login').findOne({ id: 입력한아이디 }, function (에러, 결과) {
-      if (에러) return done(에러)
-  
-      if (!결과) return done(null, false, { message: '존재하지않는 아이디요' })
-      if (입력한비번 == 결과.pw) {
-        return done(null, 결과)
-      } else {
-        return done(null, false, { message: '비번틀렸어요' })
-      }
-    })
-  }));
-app.get('/fail',function(요청,응답){
-    응답.redirect('/login');
+  usernameField: 'id',
+  passwordField: 'pw',
+  session: true,
+  passReqToCallback: false,
+}, function (입력한아이디, 입력한비번, done) {
+  // console.log(입력한아이디, 입력한비번);
+  db.collection('login').findOne({ id: 입력한아이디 }, function (에러, 결과) {
+    if (에러) return done(에러)
+    
+    if (!결과) return done(null, false, { message: '존재하지않는 아이디요' })
+
+    //암호화 처리할수있음 해보기!!
+    if (입력한비번 == 결과.pw) {
+      return done(null, 결과) //serializeUser 결과 전달
+    } else {
+      return done(null, false, { message: '비번틀렸어요' })
+            // 서버에러/성공시사용자DB데이터 / 에러메세지
+    }
+  })
+}));
+
+
+//세션 저장
+passport.serializeUser(function(user,done){
+  done(null,user.id);          //결과값이들어감 (결과)
 });
+//user.id = 아이디
+//마이페이지 접속시 - 어떤사람인지 해석할때 사용
+passport.deserializeUser(function(아이디, done){
+  //디비에서 user.id로 유저를 찾은뒤 유저정보를 {}에 넣음
+  db.collection('login').findOne({id: 아이디},function(에러,결과){
+    done(null,결과);
+              //{id : test / pw : test}
+  })
+ 
+});
+
+
