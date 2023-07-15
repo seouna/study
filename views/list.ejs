@@ -10,7 +10,7 @@
   </head>
   <body>
    
-    <%- include('nav.html') %>
+    <%- include('nav.html')  %>
       <h4 class="ml-2 my-3 text-center">❌TODOLIST❌</h4>
       <div class="container input-group mb-2">
         <input class="form-control" id="search-input">
@@ -37,11 +37,14 @@
           <%posts.forEach(function(post) { %>
             <li class="list-group-item">
               
-              <!-- <p>글번호 : <%=post._id%></p> -->
-              
+              <p>글번호 : <%=post._id%></p>
+             
               <h4><a href="detail/<%=post._id%>">할일: <%=post.제목 %></a></h4>
               <p>마감날짜 : <%=post.날짜 %></p>
+            
+              <% if(_id && post.작성자.equals(_id)){%>  
               <button class="delete btn btn-danger" data-id="<%=post._id%>">삭제</button>  
+              <%} %>
             </li>
             <%})%>
           </ul>
