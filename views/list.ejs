@@ -38,19 +38,34 @@
             <li class="list-group-item">
               
               <p>글번호 : <%=post._id%></p>
-             
+              
               <h4><a href="detail/<%=post._id%>">할일: <%=post.제목 %></a></h4>
               <p>마감날짜 : <%=post.날짜 %></p>
+              <% if(_id){ %>
+                <button class="chat btn btn-warning" data-id="<%=post.작성자%>" data-title="<%=post.제목 %>">채팅하기</button>
+                <% } %>
             
               <% if(_id && post.작성자.equals(_id)){%>  
-              <button class="delete btn btn-danger" data-id="<%=post._id%>">삭제</button>  
+              <button class="delete btn btn-secondary" data-id="<%=post._id%>">삭제</button>  
+              
               <%} %>
+             
+              
             </li>
             <%})%>
           </ul>
         </div>
           
           <script>
+             $('.chat').click(function(e){
+              var id = e.target.dataset.id;
+              var title = e.target.dataset.title;
+              $.post('/chatroom', {당한사람id : id,title : title})
+              .then(()=>{
+                console.log('채팅방 게시물 생성완료')
+              })
+            });
+            
             $('.update').on('click',function(e){
               location.href="edit"
             });

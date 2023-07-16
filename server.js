@@ -1,6 +1,7 @@
 
 require('dotenv').config();
 const express = require('express');
+const {ObjectID} = require('mongodb');
 const bodyParser = require('body-parser'); 
 const { param } = require('express/lib/request');
 const app = express();
@@ -309,4 +310,84 @@ app.get('/logout', function(req, res, next) {
     if (err) { return next(err); }
     res.redirect('/');
   });
+});
+
+app.use('/shop',require('./routes/shop.js'));
+
+app.use('/board/sub',require('./routes/board.js'));
+
+
+
+
+
+let multer = require('multer');
+var storage = multer.diskStorage({
+
+  destination : function(req, file, cb){
+    cb(null, './public/image')
+  },
+  filename : function(req, file, cb){
+    cb(null, file.originalname);
+  },
+  filefilter : function(req,file, cb){
+    var ext = path.extname(file.originalname);
+    if(ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
+        return callback(new Error('PNG, JPG만 업로드하세요'))
+    }
+    callback(null, true)
+  },
+  limits:{
+      fileSize: 1024 * 1024
+  }
+
+});
+
+var upload = multer({storage : storage});
+
+app.get('/upload',function(요청,응답){
+  응답.render('upload.ejs');
+
+});
+
+// app.post('/upload',upload.array('profile',10),function(요청,응답){
+app.post('/upload',upload.single('profile'),function(요청,응답){
+  응답.send('업로드완료');
+});
+
+app.get('/image/:imageName',function(요청,응답){
+
+  응답.sendFile(__dirname + '/public/image/' + 요청.params.imageName );
+});
+
+//채팅방개설
+app.post('/chatroom',로그인했니,function(요청,응답){
+
+  var 저장할거 = {
+    title : 요청.body.title,
+    // db에들어갈때는  ObjectId 있어야됨
+    member : [ObjectID(요청.body.당한사람id), 요청.user._id],
+    date : new Date()
+  };
+  db.collection('chatroom').insertOne(저장할거).then((결과) => {
+  // db.collection('chatroom').insertOne(저장할거,function(에러,결과){
+    응답.send('저장완료');
+  })
+});
+
+
+app.get('/chat',로그인했니,function(요청,응답){
+
+  console.log("get" +  요청.user._id);
+
+  db.collection('chatroom').find({ member: 요청.user._id }).toArray(function (에러, 결과) {
+    
+    db.collection('login').find({_id:요청.user._id}).toArray(function(에러,결과){
+    
+      
+
+    });
+    응답.render('chat.ejs',{data: 결과, sId});
+  });
+
+ 
 });

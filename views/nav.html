@@ -9,6 +9,7 @@
           <a class="nav-link active" aria-current="page" href="/list">LIST</a>
           <a class="nav-link" href="/write">글쓰기</a>
             <% if (typeof sId !== 'undefined' && sId) { %>
+              <a class="nav-link" href="/chat">채팅내역</a>
               <a class="nav-link" href="/mypage"><%= sId %> 님</a>
               <a class="nav-link" href="/logout">로그아웃</a>
             <% } else { %>
