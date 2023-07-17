@@ -391,3 +391,38 @@ app.get('/chat',로그인했니,function(요청,응답){
 
  
 });
+
+app.post('/message',로그인했니, function(요청, 응답){
+
+  var 저장할거 = {
+    parent: 요청.body.parent,
+    content: 요청.body.content,
+    userid: 요청.user._id,
+    date : new Date()
+  }
+
+  db.collection('message').insertOne(저장할거).then(() => {
+    console.log('성공');
+    응답.send('DB 저장 성공');
+  }).catch(()=>{
+    console.log('실패')
+  });
+})
+
+app.get('/message',로그인했니, function(요청,응답){
+  
+  응답.writeHead(200,{
+    "Connection": "keep-alive",
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache"
+  });
+
+  db.collection('message').find({parent : 요청.params.id}).toArray().then((결과)=>{
+
+    응답.write('event: test\n');
+    응답.write( 'data :' + JSON.stringify(결과) +'\n\n');
+  })
+
+
+
+});

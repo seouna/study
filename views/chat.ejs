@@ -41,6 +41,35 @@
                 <button class="btn btn-secondary" id="send">전송</button>
               </div>
             </div>
+
+            <script>
+              var 지금누른채팅방id;
+              var eventSource;
+              $('.list-group-item').click(function(){
+                지금누른채팅방id = this.dataset.id;
+
+                eventSource = new EventSource('/message'); // 실시간 소통채널 생성
+                eventSource.addEventListener('test',function(e){
+                  e.data; // 서버에서 보낸 데이터
+                  console.log(e.data);
+                });
+
+              });
+              
+              $('#send').click(function(){
+                var 채팅내용 = $('#chat-input').val();
+                var 보낼거 = {
+                  parent : 지금누른채팅방id,
+                  content : 채팅내용 
+                }
+                $.post('/message',보낼거).then(()=>{
+                  console.log('전송성공')
+                });
+
+              });
+
+
+            </script>
           </div>
         </div>
       
