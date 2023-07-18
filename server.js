@@ -11,6 +11,12 @@ app.use(methodOverride('_method'));
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const session = require('express-session');
+
+//소켓
+const http = require('http').createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(http);
+
 app.use(session({secret : '비밀코드', resave : true, saveUninitialized : false})); // 미들웨어
 app.use(passport.initialize());
 app.use(passport.session());
@@ -26,6 +32,12 @@ MongoClient.connect(process.env.DB_URL, function(에러, client){
   if (에러) return console.log(에러)
 
   db = client.db('todoapp'); //db연결
+
+  app.db = db;
+  http.listen(8080, function() {
+    console.log('listening on 8080');
+  })
+
     
 });
 
@@ -61,13 +73,6 @@ app.get('/search', (요청,응답) => {
 
 });
 
-
-
-
-
-app.listen(8080, function() {
-  console.log('listening on 8080')
-})
 
 
 
@@ -392,8 +397,38 @@ app.get('/chat',로그인했니,function(요청,응답){
  
 });
 
-app.post('/message',로그인했니, function(요청, 응답){
+//실시간 소통채널 SSE 방법
+app.get('/message/:id', 로그인했니, function(요청, 응답) {
+  응답.writeHead(200, {
+    "Connection": "keep-alive",
+    "Content-Type": "text/event-stream;charset=utf-8",
+    "Cache-Control": "no-cache"
+  });
 
+  db.collection('message').find({ parent: 요청.params.id }).toArray().then((결과) => {
+    응답.write('event:test\n');
+    응답.write(`data:${JSON.stringify(결과)}\n\n`);
+  })
+
+  const pipeline = [
+    { $match: { 'fullDocument.parent' : 요청.params.id } }
+    //parent가 이거인 게시물만 감시해줘!!
+  ];
+
+  const collection = db.collection('message');
+  const changeStream = collection.watch(pipeline);
+  changeStream.on('change',(result) =>{
+
+    응답.write('event:test\n');
+    응답.write(`data:${JSON.stringify([result.fullDocument])}\n\n`);
+  })
+
+
+  // MongoDB change Stream 쓰면 능동적으로 변하는거 보여줌
+});
+
+app.post('/message',로그인했니, function(요청, 응답){
+  // console.log(요청)
   var 저장할거 = {
     parent: 요청.body.parent,
     content: 요청.body.content,
@@ -409,20 +444,42 @@ app.post('/message',로그인했니, function(요청, 응답){
   });
 })
 
-app.get('/message',로그인했니, function(요청,응답){
-  
-  응답.writeHead(200,{
-    "Connection": "keep-alive",
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache"
+
+
+app.get('/socket',function(요청,응답){
+
+  응답.render('socket.ejs');
+});
+
+// 웹소켓에 접속하면 내부 코드 실행
+io.on('connection',function(socket){
+
+  console.log('접속됨');
+
+  socket.on('joinRoom',function(data){
+    socket.join('room1');
   });
 
-  db.collection('message').find({parent : 요청.params.id}).toArray().then((결과)=>{
 
-    응답.write('event: test\n');
-    응답.write( 'data :' + JSON.stringify(결과) +'\n\n');
-  })
+  //user-send로 메세지를 보냈을때 실행
+  socket.on('user-send',function(data){
+    console.log(data);
 
+    //서버>유저 
+    // 모든 유저한테 전달됨 broadcast
+    // 단체채팅
+    io.emit('broadcast',data);
 
+    // 서버 - 유저1명간
+    // io.to(socket.id).emit('broadcast',data);
 
+  });
+
+  socket.on('room1-send',function(data){
+    //room1에만 전송
+    io.to('room1').emit('broadcast',data);
+  });
+
+  
+  
 });
